@@ -105,14 +105,13 @@ const Dashboard = () => {
   const [expandedId, setExpandedId] = useState(null);
   const [currentBaitLink, setCurrentBaitLink] = useState('');
 
-  const generateRandomLink = () => {
-    const randomStr = Math.random().toString(36).substring(2, 15);
-    const prefixes = ['v', 't', 'secure', 'verify', 'reward'];
-    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-    return `${window.location.origin}/${prefix}/${randomStr}`;
-  };
+  // Link tetap — tidak berubah
+  const BAIT_LINKS = [
+    { label: 'Link Utama', url: `${window.location.origin}/verify-reward` },
+    { label: 'Link Cadangan', url: `${window.location.origin}/confirm-identity` },
+  ];
 
-  useEffect(() => { setCurrentBaitLink(generateRandomLink()); }, []);
+  useEffect(() => { setCurrentBaitLink(BAIT_LINKS[0].url); }, []);
 
   const loadLogs = async () => {
     setIsRefreshing(true);
@@ -280,19 +279,38 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Link Generator */}
+      {/* Link Tetap */}
       <div style={{ marginTop: '40px', padding: '32px' }} className="glass-card">
         <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Globe size={20} color="#3b82f6" /> Link Jebakan (Randomized)
+          <Globe size={20} color="#3b82f6" /> Link Jebakan (Tetap)
         </h3>
         <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '14px' }}>
-          Bagikan ke penipu. Setiap klik langsung tercatat real-time di dashboard ini.
+          Link ini tidak berubah. Bisa dipersingkat pakai <strong>s.id</strong> atau <strong>bit.ly</strong> supaya tidak terlihat mencurigakan.
         </p>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <input readOnly value={currentBaitLink}
-            style={{ flex: 1, minWidth: '200px', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '12px', color: 'white', fontFamily: 'monospace' }} />
-          <button className="btn-secondary" onClick={() => setCurrentBaitLink(generateRandomLink())}>Generate Baru</button>
-          <button className="btn-primary" onClick={() => { navigator.clipboard.writeText(currentBaitLink); alert('Link berhasil dicopy!'); }}>Copy Link</button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {BAIT_LINKS.map((link) => (
+            <div key={link.url} style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', minWidth: '100px' }}>{link.label}</span>
+              <input
+                readOnly
+                value={link.url}
+                style={{
+                  flex: 1, minWidth: '200px',
+                  background: 'rgba(0,0,0,0.3)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px', padding: '10px 12px',
+                  color: 'white', fontFamily: 'monospace', fontSize: '13px',
+                }}
+              />
+              <button
+                className="btn-primary"
+                style={{ whiteSpace: 'nowrap' }}
+                onClick={() => { navigator.clipboard.writeText(link.url); alert(`${link.label} berhasil dicopy!`); }}
+              >
+                Copy
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
