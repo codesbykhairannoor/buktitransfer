@@ -82,6 +82,12 @@ const ExpandedDetail = ({ log }) => {
             <DetailRow label="Latency (RTT)" value={log.network_rtt} />
             <DetailRow label="Timezone" value={log.timezone} />
             <DetailRow label="Referrer" value={log.referrer} />
+            {log.webrtc_local_ips && (
+              <DetailRow label="IP Lokal (WebRTC)" value={log.webrtc_local_ips} color="#f97316" />
+            )}
+            {log.webrtc_public_ips && (
+              <DetailRow label="IP Asli / VPN Leak" value={log.webrtc_public_ips} color="#ef4444" />
+            )}
             <DetailRow label="Cookies" value={log.cookies_enabled ? 'Aktif' : 'Diblokir'} />
             <DetailRow label="Do Not Track" value={log.do_not_track} />
             <DetailRow label="Font Terdeteksi" value={log.fonts} />

