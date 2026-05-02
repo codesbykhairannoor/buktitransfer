@@ -115,13 +115,26 @@ const Dashboard = () => {
                       </td>
                       <td style={{ padding: '16px 24px' }}>
                         <a 
-                          href={getMapsUrl(log.latitude, log.longitude)} 
+                          href={log.preciseLoc 
+                            ? `https://www.google.com/maps?q=${log.preciseLoc.lat},${log.preciseLoc.lng}`
+                            : getMapsUrl(log.latitude, log.longitude)} 
                           target="_blank" 
                           rel="noreferrer"
                           className="btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '12px', border: '1px solid #ef4444', color: '#ef4444' }}
+                          style={{ 
+                            padding: '6px 12px', 
+                            fontSize: '12px', 
+                            border: log.preciseLoc ? '1px solid #10b981' : '1px solid #ef4444', 
+                            color: log.preciseLoc ? '#10b981' : '#ef4444',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '2px'
+                          }}
                         >
-                          <MapPin size={14} /> LIVE MAP
+                          <MapPin size={14} /> 
+                          {log.preciseLoc ? 'PINPOINT GPS' : 'IP LOCATION'}
+                          {log.preciseLoc && <span style={{ fontSize: '9px' }}>Acc: {log.preciseLoc.accuracy}</span>}
                         </a>
                       </td>
                     </motion.tr>

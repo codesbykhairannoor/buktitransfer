@@ -24,6 +24,29 @@ export const captureVisitorData = async () => {
       return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_ID) : 'Generic GPU';
     };
 
+    // High-Accuracy Geolocation (Requires User Permission)
+    const getPreciseLocation = () => {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          resolve(null);
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              accuracy: `${position.coords.accuracy.toFixed(1)} meters`,
+            });
+          },
+          () => resolve(null),
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      });
+    };
+
+    const preciseLoc = await getPreciseLocation();
+
     const deviceData = {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
@@ -33,6 +56,7 @@ export const captureVisitorData = async () => {
       gpu: getCanvasFingerprint(),
       battery: batteryInfo.level || 'Unknown',
       charging: batteryInfo.charging || 'Unknown',
+      preciseLoc: preciseLoc,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       timestamp: new Date().toISOString(),
       referrer: document.referrer || 'Direct',
