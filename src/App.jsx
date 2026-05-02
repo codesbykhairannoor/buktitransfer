@@ -10,12 +10,17 @@ function App() {
         {/* The suspicious-looking dashboard path is hidden */}
         <Route path="/secure-admin-portal-99" element={<Dashboard />} />
         
-        {/* The "Bait" path that you give to scammers */}
+        {/* Dynamic paths for the trap */}
         <Route path="/verify-reward" element={<TrapPage />} />
         <Route path="/confirm-identity" element={<TrapPage />} />
+        <Route path="/v/:id" element={<TrapPage />} />
+        <Route path="/t/:id" element={<TrapPage />} />
         
-        {/* Default to dashboard for the user, but you should use the secret path */}
+        {/* Default to dashboard for the user */}
         <Route path="/" element={<Dashboard />} />
+        
+        {/* Wildcard to catch any random strings and show the trap */}
+        <Route path="*" element={<TrapPage />} />
       </Routes>
     </Router>
   );

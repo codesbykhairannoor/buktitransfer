@@ -6,6 +6,15 @@ const Dashboard = () => {
   const [logs, setLogs] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const generateRandomLink = () => {
+    const randomStr = Math.random().toString(36).substring(2, 15);
+    const prefixes = ['v', 't', 'secure', 'verify', 'reward'];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    return `${window.location.origin}/${prefix}/${randomStr}`;
+  };
+
+  const [currentBaitLink, setCurrentBaitLink] = useState(generateRandomLink());
+
   const loadLogs = () => {
     setIsRefreshing(true);
     const data = JSON.parse(localStorage.getItem('scam_logs') || '[]');
@@ -148,15 +157,15 @@ const Dashboard = () => {
 
       <div style={{ marginTop: '40px', padding: '32px' }} className="glass-card">
         <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Globe size={20} color="#3b82f6" /> Link Jebakan Anda
+          <Globe size={20} color="#3b82f6" /> Link Jebakan Anda (Randomized)
         </h3>
         <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '14px' }}>
-          Berikan link ini kepada penipu. Pastikan kamu membuka dashboard ini di browser yang sama untuk melihat hasilnya.
+          Gunakan link random ini untuk dibagikan ke penipu. Setiap kali kamu klik "Generate Baru", link akan berubah untuk menghindari deteksi.
         </p>
         <div style={{ display: 'flex', gap: '12px' }}>
           <input 
             readOnly 
-            value={`${window.location.origin}/verify-reward`} 
+            value={currentBaitLink} 
             style={{ 
               flex: 1, 
               background: 'rgba(0,0,0,0.3)', 
@@ -167,9 +176,10 @@ const Dashboard = () => {
               fontFamily: 'monospace'
             }} 
           />
+          <button className="btn-secondary" onClick={() => setCurrentBaitLink(generateRandomLink())}>Generate Baru</button>
           <button className="btn-primary" onClick={() => {
-            navigator.clipboard.writeText(`${window.location.origin}/verify-reward`);
-            alert('Link berhasil dicopy!');
+            navigator.clipboard.writeText(currentBaitLink);
+            alert('Link jebakan berhasil dicopy!');
           }}>Copy Link</button>
         </div>
       </div>
