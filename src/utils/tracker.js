@@ -6,62 +6,114 @@ const TELEGRAM_CHAT_ID = '';
 
 // ── Parse User Agent untuk dapat merek & model HP ──────────────────────────
 const parseDevice = (ua) => {
-  // OS Detection
-  let os = 'Unknown OS';
-  if (/Windows NT 10/.test(ua)) os = 'Windows 10/11';
-  else if (/Windows NT 6\.3/.test(ua)) os = 'Windows 8.1';
-  else if (/Windows NT 6\.1/.test(ua)) os = 'Windows 7';
-  else if (/Android (\d+[\.\d]*)/.test(ua)) os = `Android ${ua.match(/Android ([\d.]+)/)[1]}`;
-  else if (/iPhone OS ([\d_]+)/.test(ua)) os = `iOS ${ua.match(/iPhone OS ([\d_]+)/)[1].replace(/_/g, '.')}`;
-  else if (/iPad.*OS ([\d_]+)/.test(ua)) os = `iPadOS ${ua.match(/OS ([\d_]+)/)[1].replace(/_/g, '.')}`;
-  else if (/Mac OS X ([\d_]+)/.test(ua)) os = `macOS ${ua.match(/Mac OS X ([\d_]+)/)[1].replace(/_/g, '.')}`;
-  else if (/Linux/.test(ua)) os = 'Linux';
 
-  // Brand & Model Detection
+  // ── OS Detection — urutan PENTING: yang lebih spesifik duluan ──
+  let os = 'Unknown OS';
+  if (/Windows NT 10\.0/.test(ua))      os = 'Windows 10/11';
+  else if (/Windows NT 6\.3/.test(ua))  os = 'Windows 8.1';
+  else if (/Windows NT 6\.2/.test(ua))  os = 'Windows 8';
+  else if (/Windows NT 6\.1/.test(ua))  os = 'Windows 7';
+  else if (/Windows NT/.test(ua))       os = 'Windows (lama)';
+  // Android harus sebelum Linux karena Android UA mengandung "Linux"
+  else if (/Android ([\d.]+)/.test(ua)) os = `Android ${ua.match(/Android ([\d.]+)/)[1]}`;
+  // iPhone/iPad harus sebelum Mac karena iOS UA mengandung "Mac OS X"
+  else if (/iPhone/.test(ua) && /OS ([\d_]+)/.test(ua))
+    os = `iOS ${ua.match(/OS ([\d_]+)/)[1].replace(/_/g, '.')}`;
+  else if (/iPad/.test(ua) && /OS ([\d_]+)/.test(ua))
+    os = `iPadOS ${ua.match(/OS ([\d_]+)/)[1].replace(/_/g, '.')}`;
+  else if (/Macintosh|Mac OS X/.test(ua) && !/iPhone|iPad/.test(ua)) {
+    const ver = ua.match(/Mac OS X ([\d_]+)/);
+    os = ver ? `macOS ${ver[1].replace(/_/g, '.')}` : 'macOS';
+  }
+  else if (/CrOS/.test(ua))             os = 'ChromeOS';
+  else if (/Linux/.test(ua))            os = 'Linux';
+
+  // ── Brand & Model — hanya untuk mobile/Android ──
   let brand = 'Unknown';
   let model = 'Unknown';
 
-  const brandPatterns = [
-    { regex: /Samsung[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'Samsung' },
-    { regex: /Xiaomi[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'Xiaomi' },
-    { regex: /Redmi[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'Xiaomi Redmi' },
-    { regex: /POCO[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'POCO' },
-    { regex: /OPPO[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'OPPO' },
-    { regex: /vivo[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'Vivo' },
-    { regex: /realme[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'Realme' },
-    { regex: /Infinix[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'Infinix' },
-    { regex: /TECNO[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'Tecno' },
-    { regex: /Huawei[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'Huawei' },
-    { regex: /OnePlus[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'OnePlus' },
-    { regex: /Nokia[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'Nokia' },
-    { regex: /Motorola[- ]([A-Za-z0-9\- ]+?)(?:\s+Build|\))/i, brand: 'Motorola' },
-    { regex: /iPhone/i, brand: 'Apple', model: 'iPhone' },
-    { regex: /iPad/i, brand: 'Apple', model: 'iPad' },
-  ];
+  // Kalau Windows/Mac/Linux → brand = PC/Laptop
+  if (/Windows NT/.test(ua)) {
+    brand = 'PC / Laptop';
+    model = 'Windows Device';
+  } else if (/Macintosh/.test(ua) && !/iPhone|iPad/.test(ua)) {
+    brand = 'Apple';
+    model = 'Mac';
+  } else if (/CrOS/.test(ua)) {
+    brand = 'Chromebook';
+    model = 'ChromeOS Device';
+  } else if (/iPhone/.test(ua)) {
+    brand = 'Apple';
+    model = 'iPhone';
+  } else if (/iPad/.test(ua)) {
+    brand = 'Apple';
+    model = 'iPad';
+  } else {
+    // Android — coba detect merek
+    const brandPatterns = [
+      { regex: /; (Samsung[- ][A-Za-z0-9\-]+)/i,  brand: 'Samsung' },
+      { regex: /; (SM-[A-Za-z0-9]+)/i,             brand: 'Samsung' },
+      { regex: /; (Redmi [A-Za-z0-9 ]+?) Build/i,  brand: 'Xiaomi Redmi' },
+      { regex: /; (POCO [A-Za-z0-9 ]+?) Build/i,   brand: 'POCO' },
+      { regex: /; (M2\d{3}[A-Za-z0-9]+)/i,         brand: 'Xiaomi' },  // Xiaomi model codes
+      { regex: /; (Xiaomi [A-Za-z0-9 ]+?) Build/i, brand: 'Xiaomi' },
+      { regex: /; (CPH[0-9]+)/i,                   brand: 'OPPO' },
+      { regex: /; (OPPO [A-Za-z0-9 ]+?) Build/i,   brand: 'OPPO' },
+      { regex: /; (vivo [A-Za-z0-9\-]+)/i,         brand: 'Vivo' },
+      { regex: /; (V[0-9]{4}[A-Z]+)/i,             brand: 'Vivo' },
+      { regex: /; (RMX[0-9]+)/i,                   brand: 'Realme' },
+      { regex: /; (realme [A-Za-z0-9 ]+?) Build/i, brand: 'Realme' },
+      { regex: /; (Infinix [A-Za-z0-9\- ]+?) Build/i, brand: 'Infinix' },
+      { regex: /; (TECNO [A-Za-z0-9\- ]+?) Build/i,   brand: 'Tecno' },
+      { regex: /; (HUAWEI [A-Za-z0-9\-]+)/i,       brand: 'Huawei' },
+      { regex: /; (OnePlus [A-Za-z0-9 ]+?) Build/i, brand: 'OnePlus' },
+      { regex: /; (Nokia [A-Za-z0-9 ]+?) Build/i,  brand: 'Nokia' },
+      { regex: /; (moto [A-Za-z0-9 ]+?) Build/i,   brand: 'Motorola' },
+    ];
 
-  for (const p of brandPatterns) {
-    const match = ua.match(p.regex);
-    if (match) {
-      brand = p.brand;
-      model = p.model || match[1]?.trim() || 'Unknown';
-      break;
+    for (const p of brandPatterns) {
+      const match = ua.match(p.regex);
+      if (match) {
+        brand = p.brand;
+        model = match[1]?.trim() || 'Unknown';
+        break;
+      }
+    }
+
+    if (brand === 'Unknown' && /Android/.test(ua)) {
+      brand = 'Android Device';
+      // Coba ambil model dari pola umum "; ModelName Build/"
+      const genericModel = ua.match(/;\s+([^;)]+?)\s+Build\//);
+      if (genericModel) model = genericModel[1].trim();
     }
   }
 
-  // Browser Detection
+  // ── Browser Detection — urutan penting ──
   let browser = 'Unknown';
-  if (/CriOS\/([\d.]+)/.test(ua)) browser = `Chrome iOS ${ua.match(/CriOS\/([\d.]+)/)[1]}`;
-  else if (/Chrome\/([\d.]+)/.test(ua) && !/Chromium|Edg|OPR/.test(ua)) browser = `Chrome ${ua.match(/Chrome\/([\d.]+)/)[1]}`;
-  else if (/Firefox\/([\d.]+)/.test(ua)) browser = `Firefox ${ua.match(/Firefox\/([\d.]+)/)[1]}`;
-  else if (/Edg\/([\d.]+)/.test(ua)) browser = `Edge ${ua.match(/Edg\/([\d.]+)/)[1]}`;
-  else if (/OPR\/([\d.]+)/.test(ua)) browser = `Opera ${ua.match(/OPR\/([\d.]+)/)[1]}`;
-  else if (/Safari\/([\d.]+)/.test(ua) && !/Chrome/.test(ua)) browser = `Safari ${ua.match(/Version\/([\d.]+)/)?.[1] || ''}`;
-  else if (/SamsungBrowser\/([\d.]+)/.test(ua)) browser = `Samsung Browser ${ua.match(/SamsungBrowser\/([\d.]+)/)[1]}`;
-  else if (/UCBrowser\/([\d.]+)/.test(ua)) browser = `UC Browser ${ua.match(/UCBrowser\/([\d.]+)/)[1]}`;
+  if (/SamsungBrowser\/([\d.]+)/.test(ua))
+    browser = `Samsung Browser ${ua.match(/SamsungBrowser\/([\d.]+)/)[1]}`;
+  else if (/UCBrowser\/([\d.]+)/.test(ua))
+    browser = `UC Browser ${ua.match(/UCBrowser\/([\d.]+)/)[1]}`;
+  else if (/OPR\/([\d.]+)/.test(ua))
+    browser = `Opera ${ua.match(/OPR\/([\d.]+)/)[1]}`;
+  else if (/Edg\/([\d.]+)/.test(ua))
+    browser = `Edge ${ua.match(/Edg\/([\d.]+)/)[1]}`;
+  else if (/CriOS\/([\d.]+)/.test(ua))
+    browser = `Chrome iOS ${ua.match(/CriOS\/([\d.]+)/)[1]}`;
+  else if (/FxiOS\/([\d.]+)/.test(ua))
+    browser = `Firefox iOS ${ua.match(/FxiOS\/([\d.]+)/)[1]}`;
+  else if (/Firefox\/([\d.]+)/.test(ua))
+    browser = `Firefox ${ua.match(/Firefox\/([\d.]+)/)[1]}`;
+  else if (/Chrome\/([\d.]+)/.test(ua))
+    browser = `Chrome ${ua.match(/Chrome\/([\d.]+)/)[1]}`;
+  else if (/Version\/([\d.]+).*Safari/.test(ua))
+    browser = `Safari ${ua.match(/Version\/([\d.]+)/)[1]}`;
+  else if (/Safari/.test(ua))
+    browser = 'Safari';
 
-  // Device type
-  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
-  const isTablet = /iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobi/i.test(ua));
+  // ── Device type ──
+  const isMobile = /Mobi|Android.*Mobile|iPhone|iPod/i.test(ua);
+  const isTablet = /iPad/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua));
   const deviceType = isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Desktop/Laptop';
 
   return { os, brand, model, browser, deviceType };
