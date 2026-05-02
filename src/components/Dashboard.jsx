@@ -105,9 +105,12 @@ const Dashboard = () => {
                       </td>
                       <td style={{ padding: '16px 24px', fontSize: '14px' }}>{log.org}</td>
                       <td style={{ padding: '16px 24px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
-                          <Smartphone size={14} />
-                          {log.platform}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px' }}>
+                          <span style={{ color: '#3b82f6' }}>CPU: {log.cores} Cores</span>
+                          <span style={{ color: '#10b981' }}>GPU: {log.gpu?.split(' ').slice(-2).join(' ')}</span>
+                          <span style={{ color: log.charging === 'Charging' ? '#10b981' : '#f59e0b' }}>
+                            Batt: {log.battery} ({log.charging === 'Charging' ? '🔌' : '🔋'})
+                          </span>
                         </div>
                       </td>
                       <td style={{ padding: '16px 24px' }}>
@@ -116,9 +119,9 @@ const Dashboard = () => {
                           target="_blank" 
                           rel="noreferrer"
                           className="btn-secondary"
-                          style={{ padding: '6px 12px', fontSize: '12px' }}
+                          style={{ padding: '6px 12px', fontSize: '12px', border: '1px solid #ef4444', color: '#ef4444' }}
                         >
-                          <ExternalLink size={14} /> Lacak
+                          <MapPin size={14} /> LIVE MAP
                         </a>
                       </td>
                     </motion.tr>

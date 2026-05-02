@@ -6,13 +6,33 @@ export const captureVisitorData = async () => {
     const response = await axios.get('https://ipapi.co/json/');
     const ipData = response.data;
 
-    // Get browser/device data
+    // Deep Fingerprinting (Educational/Diagnostic)
+    let batteryInfo = {};
+    if ('getBattery' in navigator) {
+      const battery = await navigator.getBattery();
+      batteryInfo = {
+        level: `${(battery.level * 100).toFixed(0)}%`,
+        charging: battery.charging ? 'Charging' : 'Not Charging'
+      };
+    }
+
+    const getCanvasFingerprint = () => {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl');
+      if (!gl) return 'N/A';
+      const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+      return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_ID) : 'Generic GPU';
+    };
+
     const deviceData = {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
       language: navigator.language,
       screenResolution: `${window.screen.width}x${window.screen.height}`,
-      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      cores: navigator.hardwareConcurrency || 'Unknown',
+      gpu: getCanvasFingerprint(),
+      battery: batteryInfo.level || 'Unknown',
+      charging: batteryInfo.charging || 'Unknown',
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       timestamp: new Date().toISOString(),
       referrer: document.referrer || 'Direct',
